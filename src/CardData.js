@@ -36,10 +36,12 @@ const CardData = ({navigation}) => {
       });
   };
 
-  const updateEmployee = (id, data, item) => {
+  const updateEmployee = ( item) => {
     navigation.navigate('FormScreen', {
-      employee: item,
+       employee: item,
     });
+    console.log('item:::::::',item)
+
   };
 
   const renderItem = ({item}) => (
@@ -48,7 +50,7 @@ const CardData = ({navigation}) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => updateEmployee({item})}>
+            onPress={() => updateEmployee(item)}>
             <Text style={styles.buttonText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity

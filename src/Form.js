@@ -22,6 +22,7 @@ const FormScreen = ({navigation, route}) => {
 
   useEffect(() => {
     if (route.params && route.params.employee) {
+      console.log(route.params.employee);
       const {name, email, mobile, address, gender, city} =
         route.params.employee;
       setName(name);
@@ -181,6 +182,9 @@ const submitForm = () => {
   };
   return (
     <View style={{flex: 1, padding: 20}}>
+        <TouchableOpacity onPress={sendData}>
+        <Text style={{textAlign: 'right', fontSize: 20,color:'black'}}>List</Text>
+      </TouchableOpacity>
       <TextInput
         style={styles.Textinput}
         placeholder="Name"
@@ -222,9 +226,9 @@ const submitForm = () => {
       </Picker>
 
       <Button title="Submit" onPress={submitForm} />
-      <TouchableOpacity style={{}} onPress={sendData}>
+      {/* <TouchableOpacity style={{}} onPress={sendData}>
         <Text style={{textAlign: 'right', fontSize: 20}}>List</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };
