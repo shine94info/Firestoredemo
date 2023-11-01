@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useMemo} from 'react';
-import {View, Text, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, FlatList, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 
 const CardData = ({navigation}) => {
@@ -45,6 +45,7 @@ const CardData = ({navigation}) => {
   };
 
   const renderItem = ({item}) => (
+
     <View style={styles.container}>
       <View style={styles.cardview}>
         <View style={styles.buttonContainer}>
@@ -59,13 +60,17 @@ const CardData = ({navigation}) => {
             <Text style={styles.buttonText}>Delete</Text>
           </TouchableOpacity>
         </View>
-        <Text>Name: {item.name}</Text>
-        <Text>Email: {item.email}</Text>
-        <Text>Mobile: {item.mobile}</Text>
-        <Text>Address: {item.address}</Text>
-        <Text>Gender: {item.gender}</Text>
-        <Text>City: {item.city}</Text>
-      </View>
+        <Text>Name: <Text>{item.name}</Text></Text>
+      <Text>Email: <Text>{item.email}</Text></Text>
+      <Text>Mobile: <Text>{item.mobile}</Text></Text>
+      <Text>Address: <Text>{item.address}</Text></Text>
+      <Text>Gender: <Text>{item.gender}</Text></Text>
+      <Text>City: <Text>{item.city}</Text></Text>
+      {item.imageUrl && (
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      )}
+      {/* {item.uri && <Image source={{ uri: item.uri }} style={styles.image} />} */}
+    </View>
     </View>
   );
 
