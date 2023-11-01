@@ -7,11 +7,15 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import {Picker} from '@react-native-picker/picker';
 import RadioGroup from 'react-native-radio-buttons-group';
+import DropDownPicker from 'react-native-dropdown-picker';
+
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 const FormScreen = ({navigation, route}) => {
@@ -20,23 +24,35 @@ const FormScreen = ({navigation, route}) => {
   const [mobile, setMobile] = useState('');
   const [address, setAddress] = useState('');
   const [gender, setGender] = useState('female');
-  const [city, setCity] = useState('');
+  
+  // const [city, setCity] = useState();
   const [url, setUrl] = useState('');
+  const [open, setOpen] = useState(false);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const cities = [
+    {label: 'Ahmedabad', value: 'Ahmedabad'},
+    {label: 'Surat', value: 'Surat'},
+    // Add more cities as needed
+  ];
+
   const [uploadimage, setUploadImage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    //setIsLoading(false);
     if (route.params && route.params.employee) {
       console.log(route.params.employee);
-      const {name, email, mobile, address, gender, city} =
+      const {name, email, mobile, address, gender, selectedCity, imageUrl} =
         route.params.employee;
       setName(name);
       setEmail(email);
       setMobile(mobile);
       setAddress(address);
-
       setGender(gender);
-      setCity(city);
+      setSelectedCity(selectedCity);
+      setUrl(imageUrl || '');
     }
+    
   }, [route.params]);
 
   const handleImageUpload = async () => {
@@ -48,6 +64,7 @@ const FormScreen = ({navigation, route}) => {
       },
     };
     launchImageLibrary(options, response => {
+      setIsLoading(true);
       console.log('Response = ', response);
 
       if (response.didCancel) {
@@ -57,7 +74,7 @@ const FormScreen = ({navigation, route}) => {
       } else {
         const uri = response.assets[0].uri;
         console.log('uri????', uri);
-        const filename = uri.substring(uri.lastIndexOf('/') );
+        const filename = uri.substring(uri.lastIndexOf('/'));
         console.log('filename', filename);
 
         // Upload the image to Firebase storage
@@ -65,9 +82,9 @@ const FormScreen = ({navigation, route}) => {
         const task = reference.putFile(uri);
 
         task.on('state_changed', taskSnapshot => {
-          console.log(
-            `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-          );
+          if (taskSnapshot.bytesTransferred === taskSnapshot.totalBytes) {
+            setIsLoading(false);
+          }
         });
 
         task
@@ -79,10 +96,9 @@ const FormScreen = ({navigation, route}) => {
               const downloadURL = await storage()
                 .ref(`images/${filename}`)
                 .getDownloadURL();
-                console.log('Image URL:', downloadURL);
-                setUploadImage(downloadURL);
-                setUrl(downloadURL); 
-              // Save the URL or perform any other necessary action with the URL here
+              console.log('Image URL:', downloadURL);
+              setUploadImage(downloadURL);
+              setUrl(downloadURL);
             } catch (error) {
               console.error('Error getting download URL: ', error);
             }
@@ -95,7 +111,7 @@ const FormScreen = ({navigation, route}) => {
   };
 
   const submitForm = () => {
-    if (!name || !email || !mobile || !address) {
+    if (!name || !email || !mobile || !address || !selectedCity) {
       alert('Please fill in all fields');
       return;
     }
@@ -107,15 +123,16 @@ const FormScreen = ({navigation, route}) => {
       alert('Please enter a valid mobile number');
       return;
     }
-
+  
     const data = {
       name,
       email,
       mobile,
       address,
       gender,
-      city,
+      selectedCity,
       imageUrl: url,
+    
     };
     console.log('data', data);
 
@@ -130,6 +147,7 @@ const FormScreen = ({navigation, route}) => {
         .then(() => {
           console.log('Employee updated!');
           navigation.navigate('CardData');
+          setUrl(''); 
         })
         .catch(error => {
           console.error('Error updating employee: ', error);
@@ -140,7 +158,7 @@ const FormScreen = ({navigation, route}) => {
         .add(data)
         .then(() => {
           console.log('Employee added!');
-          //navigation.navigate('CardData');
+          navigation.navigate('CardData');
         })
         .catch(error => {
           console.error('Error adding employee: ', error);
@@ -149,10 +167,8 @@ const FormScreen = ({navigation, route}) => {
   };
 
   const validateEmail = email => {
-    // return /\S+@\S+\.\S+/.test(email);
-    return /^[a-zA-Z][a-zA-Z0-9._]+@gmail\.com$/.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
-
   const validateMobile = mobile => {
     return /^[0-9]{10}$/.test(mobile);
   };
@@ -182,19 +198,7 @@ const FormScreen = ({navigation, route}) => {
           List
         </Text>
       </TouchableOpacity>
-      <View style={{ borderWidth: 1,
-    borderColor: 'black',
-    marginTop: 20,}}>
-     
-     <Picker
-        selectedValue={city}
-        onValueChange={(itemValue, itemIndex) => setCity(itemValue)}>
-        <Picker.Item label="Gujarat" value="Gujarat" />
-        <Picker.Item label="Panjab" value="Panjab" />
-        <Picker.Item label="Surat" value="Surat" />
-      </Picker>
-      </View>
-   
+
       <TextInput
         style={styles.Textinput}
         placeholder="Name"
@@ -226,15 +230,41 @@ const FormScreen = ({navigation, route}) => {
         onPress={setGender}
         selectedId={gender}
       />
-
-      <View style={{marginTop: 10}}>
+      <DropDownPicker
+        open={open}
+        value={selectedCity}
+        items={cities}
+        setOpen={setOpen}
+        setValue={setSelectedCity}
+        style={{marginTop: 20}}
+        placeholder="Select a city"
+        dropDownContainerStyle={{marginTop: 2}}
+      />
+      <View style={styles.btn}>
         <Button title="Choose Image" onPress={handleImageUpload} />
       </View>
 
-      <Button title="Submit" onPress={submitForm} />
+      {/* <View style={styles.btn}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#0000ff" />
+          ) : (
+            <Button title="Submit" onPress={submitForm} />
+          )}
+        </View> */}
+        <View style={styles.buttonContainer}>
+        {isLoading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+            <Text style={styles.loaderText}>Uploading Image...</Text>
+          </View>
+        ) : (
+          <Button title="Submit" onPress={submitForm} />
+        )}
+      </View>
       {/* <TouchableOpacity style={{}} onPress={sendData}>
         <Text style={{textAlign: 'right', fontSize: 20}}>List</Text>
       </TouchableOpacity> */}
+      {/* <Image source={{uri:url}} style={{height:200,width:200,}} ></Image> */}
     </View>
   );
 };
@@ -246,6 +276,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     height: 50,
     marginTop: 20,
+  },
+  btn: {
+    marginTop: 20,
+  },
+  buttonContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  loaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loaderText: {
+    marginLeft: 10,
+    fontSize: 16,
   },
 });
 export default FormScreen;

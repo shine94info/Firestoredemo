@@ -1,9 +1,20 @@
 import React, {useState, useEffect, useMemo} from 'react';
-import {View, Text, FlatList, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Linking,
+} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import {Picker} from '@react-native-picker/picker';
 
 const CardData = ({navigation}) => {
   const [employees, setEmployees] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const unsubscribe = firestore()
@@ -23,6 +34,10 @@ const CardData = ({navigation}) => {
     return () => unsubscribe();
   }, []);
 
+  const filteredEmployees = employees.filter(employee =>
+    employee.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   const handleDelete = item => {
     firestore()
       .collection('employees')
@@ -36,48 +51,81 @@ const CardData = ({navigation}) => {
       });
   };
 
-  const updateEmployee = ( item) => {
+  const updateEmployee = item => {
     navigation.navigate('FormScreen', {
-       employee: item,
+      employee: item,
     });
-    console.log('item:::::::',item)
-
+    console.log('item:::::::', item);
   };
 
-  const renderItem = ({item}) => (
+  const handleCall = phoneNumber => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
 
-    <View style={styles.container}>
-      <View style={styles.cardview}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => updateEmployee(item)}>
-            <Text style={styles.buttonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDelete(item)}>
-            <Text style={styles.buttonText}>Delete</Text>
-          </TouchableOpacity>
+  const renderItem = ({item}) => {
+    console.log('Item:', item); // Logging the entire item object
+    return (
+      <View style={styles.container}>
+        <View style={styles.cardview}>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => updateEmployee(item)}>
+              <Text style={styles.buttonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDelete(item)}>
+              <Text style={styles.buttonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+          {/* {item.imageUrl && (
+            <Image
+              source={{uri: item.imageUrl}}
+              style={{height: 100, width: 120}}
+            />
+          )} */}
+          
+          <Text>Name: {item.name}</Text>
+          <Text>Email: {item.email}</Text>
+          {/* <TouchableOpacity onPress={() => handleCall(item.mobile)}>
+            <Text style={styles.phoneNumber}>{item.mobile}</Text>
+          </TouchableOpacity> */}
+          <View style={styles.phoneNumberContainer}>
+        <Image
+          source={{
+            uri:
+              'https://play.google.com/store/apps/details?id=info.kfsoft.phonemanager&hl=en_US',
+          }}
+          style={styles.image}
+        />
+        <TouchableOpacity onPress={() => handleCall(item.mobile)}>
+          <Text style={styles.phoneNumber}>{item.mobile}</Text>
+        </TouchableOpacity>
+      </View>
+          <Text>Address: {item.address}</Text>
+          <Text>Gender: {item.gender}</Text>
+          <Text>City: {item.selectedCity}</Text>{' '}
         </View>
-        <Text>Name: <Text>{item.name}</Text></Text>
-      <Text>Email: <Text>{item.email}</Text></Text>
-      <Text>Mobile: <Text>{item.mobile}</Text></Text>
-      <Text>Address: <Text>{item.address}</Text></Text>
-      <Text>Gender: <Text>{item.gender}</Text></Text>
-      <Text>City: <Text>{item.city}</Text></Text>
-      {item.imageUrl && (
-        <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      )}
-      {/* {item.uri && <Image source={{ uri: item.uri }} style={styles.image} />} */}
-    </View>
-    </View>
-  );
+      </View>
+    );
+  };
 
   return (
-    <View>
-      <FlatList
+    <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by name"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      {/* <FlatList
         data={employees}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+      /> */}
+      <FlatList
+        data={searchQuery ? filteredEmployees : employees}
         renderItem={renderItem}
         keyExtractor={item => item.id}
       />
@@ -91,6 +139,11 @@ const styles = StyleSheet.create({
   cardview: {
     borderWidth: 1,
     backgroundColor: '#F2FFF4',
+    borderRadius: 20,
+    padding: 8,
+  },
+  searchInput: {
+    borderWidth: 1,
     borderRadius: 20,
     padding: 8,
   },
@@ -109,6 +162,20 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginLeft: 10,
+  },
+  phoneNumberContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  image: {
+    width: 40,
+    height: 40,
+    marginRight: 10,
+  },
+  phoneNumber: {
+    color: 'blue', // You can use any color of your choice
+    textDecorationLine: 'underline',
+    marginTop: 5,
   },
 });
 
