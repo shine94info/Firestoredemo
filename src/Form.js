@@ -19,13 +19,18 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 const FormScreen = ({navigation, route}) => {
+
+  const currentLocationName = route.params?.currentLocationName || ''; 
+
+  const latitude = route.params?.latitude || ''; 
+  const longitude = route.params?.longitude || ''; 
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [address, setAddress] = useState('');
   const [gender, setGender] = useState('female');
-  
-  // const [city, setCity] = useState();
+// const [city, setCity] = useState();
   const [url, setUrl] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
@@ -69,8 +74,10 @@ const FormScreen = ({navigation, route}) => {
 
       if (response.didCancel) {
         console.log('User cancelled image picker');
+        setIsLoading(false);
       } else if (response.error) {
         console.log('ImagePicker Error: ', response.error);
+        setIsLoading(false);
       } else {
         const uri = response.assets[0].uri;
         console.log('uri????', uri);
@@ -132,6 +139,9 @@ const FormScreen = ({navigation, route}) => {
       gender,
       selectedCity,
       imageUrl: url,
+      currentLocationName: currentLocationName,
+      latitude:latitude,
+      longitude:longitude
     
     };
     console.log('data', data);
